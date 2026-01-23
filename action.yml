@@ -1,0 +1,16 @@
+name: 'Codemod Agent'
+description: 'Automatically suggest codemods in pull requests for dependency version bumps'
+author: 'Lakshan Perera'
+branding:
+  icon: 'code'
+  color: 'blue'
+
+inputs:
+  github-token:
+    description: 'GitHub token for API access'
+    required: true
+    default: ${{ github.token }}
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

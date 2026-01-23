@@ -1,0 +1,40 @@
+{
+  "name": "codemod-agent",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "codemod",
+    "ai",
+    "codemod-agent",
+    "codemod-bot",
+    "napi",
+    "bot",
+    "jssg",
+    "ast-grep"
+  ],
+  "author": "Lakshan Perera",
+  "license": "MIT",
+  "packageManager": "pnpm@10.14.0",
+  "dependencies": {
+    "@actions/core": "^2.0.2",
+    "@actions/github": "^7.0.0",
+    "@octokit/core": "^7.0.6",
+    "octokit": "^5.0.5"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.8",
+    "@octokit/types": "^16.0.0",
+    "@types/node": "^25.0.10",
+    "oxlint": "^1.41.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
