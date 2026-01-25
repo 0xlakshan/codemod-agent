@@ -1,10 +1,7 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
-import type { GitHubService } from "../services/github.js";
-import {
-  createSuggestionComment,
-  createMockSuggestion,
-} from "../services/suggestion.js";
+import type { GitHubService } from "../github";
+import { createSuggestionComment, createMockSuggestion } from "../suggestion";
 
 const COMMAND_PATTERN = /^\/apply\s+([a-zA-Z0-9-_]+)$/;
 
