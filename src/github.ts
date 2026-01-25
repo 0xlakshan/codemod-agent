@@ -1,9 +1,5 @@
 import * as core from "@actions/core";
-import type {
-  PullRequest,
-  CompareCommits,
-  ReviewCommentParams,
-} from "../types/index.js";
+import type { PullRequest, CompareCommits, ReviewCommentParams } from "./types";
 
 export class GitHubService {
   constructor(
@@ -63,9 +59,6 @@ export class GitHubService {
     }
   }
 
-  /**
-   * Create a review comment on a pull request
-   */
   async createReviewComment(params: ReviewCommentParams): Promise<void> {
     try {
       core.debug(

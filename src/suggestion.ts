@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import type { GitHubService } from "./github.js";
-import type { SuggestionParams, ReviewCommentParams } from "../types/index.js";
+import type { SuggestionParams, ReviewCommentParams } from "./types";
 
 /**
  * Format code as a GitHub suggestion

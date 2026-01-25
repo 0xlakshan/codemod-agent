@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
-import type { FileChange, DependencyChange } from "../types/index.js";
-import { compareVersions } from "../utils/version.js";
+import type { FileChange, DependencyChange } from "./types";
+import { compareVersions } from "./utils/version";
 
 /**
  * Extract package.json changes from file list
