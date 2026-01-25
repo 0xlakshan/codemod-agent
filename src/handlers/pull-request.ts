@@ -1,11 +1,11 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
-import type { GitHubService } from "../services/github.js";
+import type { GitHubService } from "../github";
 import {
   extractPackageJsonChanges,
   parseDependencyChanges,
-} from "../services/diff-parser.js";
-import { isMajorVersionBump } from "../utils/version.js";
+} from "../diff-parser";
+import { isMajorVersionBump } from "../utils/version";
 
 /**
  * Handle pull_request events
