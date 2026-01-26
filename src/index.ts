@@ -3,6 +3,8 @@ import * as github from "@actions/github";
 import { GitHubService } from "./github";
 import { handlePullRequest } from "./handlers/pull-request";
 import { handleIssueComment } from "./handlers/issue-comment";
+import dotenv from "dotenv";
+dotenv.config();
 
 async function run(): Promise<void> {
   try {

@@ -27,6 +27,8 @@
     "@actions/core": "^2.0.2",
     "@actions/github": "^7.0.0",
     "@octokit/core": "^7.0.6",
+    "@octokit/webhooks": "^14.2.0",
+    "dotenv": "^17.2.3",
     "octokit": "^5.0.5"
   },
   "devDependencies": {
