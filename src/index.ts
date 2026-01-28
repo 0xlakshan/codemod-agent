@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import fs from "fs";
 
-import express /*, { NextFunction, Request, Response }*/ from "express";
+import express, { NextFunction, Request } from "express";
 import cors from "cors";
 import consoleLogLevel from "console-log-level";
 
@@ -145,7 +145,7 @@ async function run(): Promise<void> {
       throw new Error(`web hook error: ${error.event}`);
     });
 
-    expressApp.use((req, _, next) => {
+    expressApp.use((req: Request, _, next: NextFunction) => {
       console.log(`${req.method} ${req.path}`);
       next();
     });
