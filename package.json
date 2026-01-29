@@ -4,11 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "pnpm build:native && tsc",
+    "build:native": "napi build --platform --release native",
+    "build:native:debug": "napi build --platform native",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
+  },
+  "napi": {
+    "name": "codemod-agent-native",
+    "triples": {
+      "defaults": true,
+      "additional": []
+    }
   },
   "keywords": [
     "codemod",
@@ -31,12 +40,10 @@
     "@types/body-parser": "^1.19.6",
     "@types/console-log-level": "^1.4.5",
     "@types/cors": "^2.8.19",
-    "@types/diff": "^8.0.0",
     "@types/express": "^5.0.6",
     "body-parser": "^2.2.2",
     "console-log-level": "^1.4.1",
     "cors": "^2.8.6",
-    "diff": "^8.0.3",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "octokit": "^5.0.5",
@@ -44,6 +51,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
+    "@napi-rs/cli": "^3.0.0",
     "@octokit/types": "^16.0.0",
     "@types/node": "^25.0.10",
     "oxlint": "^1.41.0",

@@ -1,0 +1,16 @@
+[package]
+name = "codemod-agent-native"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = { version = "3", features = ["async", "tokio_rt"] }
+napi-derive = "3"
+similar = "2.6"
+tokio = { version = "1", features = ["rt-multi-thread"] }
+
+[build-dependencies]
+napi-build = "2"
