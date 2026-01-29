@@ -5,15 +5,23 @@ import express, { NextFunction, Request } from "express";
 import cors from "cors";
 import consoleLogLevel from "console-log-level";
 
+import type { Octokit } from "octokit";
 import { App } from "octokit";
 import SmeeClient from "smee-client";
-import { createNodeMiddleware } from "@octokit/webhooks";
+import { createNodeMiddleware, EmitterWebhookEvent } from "@octokit/webhooks";
+
+import { GitHubPRClient } from "./github.js";
 
 dotenv.config();
 
 const expressApp = express();
 
 expressApp.use(cors());
+
+// Types
+export type AppOctokit = Octokit;
+export type PullRequestOpenedPayload =
+  EmitterWebhookEvent<"pull_request.opened">["payload"];
 
 async function run(): Promise<void> {
   const appId = process.env.APP_ID;
@@ -48,96 +56,15 @@ async function run(): Promise<void> {
     app.webhooks.on("pull_request.opened", async ({ octokit, payload }) => {
       console.log(`pull request - #${payload.pull_request.number}`);
 
-      const listFiles = await octokit.rest.pulls.listFiles({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
-        pull_number: payload.pull_request.number,
-      });
+      const githubContext = new GitHubPRClient(octokit, payload);
+      const changedFiles = await githubContext.getChangedFiles();
 
-      console.log("listFiles.data ---> ", listFiles.data);
-
-      for (const eachFile of listFiles.data) {
-        // Only updated code gets diff checked
-        if (!["added", "modified", "changed"].includes(eachFile.status)) {
-          continue;
+      for (const file of changedFiles) {
+        if (file.status === "added") {
+          // apply codemod
+        } else {
+          // apply codemod
         }
-
-        if (eachFile.status === "added") {
-          const fileHeadContent = await octokit.rest.repos.getContent({
-            owner: payload.repository.owner.login,
-            repo: payload.repository.name,
-            path: eachFile.filename,
-            ref: payload.pull_request.head.sha,
-            mediaType: { format: "diff" },
-          });
-
-          // Narrow down to correct TS return type
-          if (Array.isArray(fileHeadContent.data)) {
-            throw new Error("Unsupported data type");
-          }
-
-          if (fileHeadContent.data.type !== "file") {
-            throw new Error("Unsupported fileConent type");
-          }
-
-          const decodedHeadContent = Buffer.from(
-            fileHeadContent.data.content,
-            "base64",
-          ).toString("utf-8");
-
-          console.log("Decoded new file head content:\n", decodedHeadContent);
-
-          // TODO: Just apply codemods to the head
-          continue;
-        }
-
-        const fileHeadContent = await octokit.rest.repos.getContent({
-          owner: payload.repository.owner.login,
-          repo: payload.repository.name,
-          path: eachFile.filename,
-          ref: payload.pull_request.head.sha,
-          mediaType: { format: "diff" },
-        });
-
-        const fileBaseContent = await octokit.rest.repos.getContent({
-          owner: payload.repository.owner.login,
-          repo: payload.repository.name,
-          path: eachFile.filename,
-          ref: payload.pull_request.base.sha,
-          mediaType: { format: "diff" },
-        });
-
-        console.log("whole fileContent --> ", fileHeadContent);
-
-        // Narrow down to correct TS return type
-        if (
-          Array.isArray(fileHeadContent.data) ||
-          Array.isArray(fileBaseContent.data)
-        ) {
-          throw new Error("Unsupported data type");
-        }
-
-        if (
-          fileHeadContent.data.type !== "file" ||
-          fileBaseContent.data.type !== "file"
-        ) {
-          throw new Error("Unsupported fileConent type");
-        }
-
-        // TODO: Check the diff
-        // Apply the codemods to only where code has been changed & added
-        // No need to do diff checks on new files and deleted files
-        const decodedHeadContent = Buffer.from(
-          fileHeadContent.data.content,
-          "base64",
-        ).toString("utf-8");
-        const decodedBaseContent = Buffer.from(
-          fileBaseContent.data.content,
-          "base64",
-        ).toString("utf-8");
-
-        console.log("Decoded updated file base content:\n", decodedBaseContent);
-        console.log("Decoded updated file head content:\n", decodedHeadContent);
       }
     });
 
