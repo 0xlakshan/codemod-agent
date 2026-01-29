@@ -1,6 +1,8 @@
 /node_modules
 /dist
 .env
+*.node
 codemod-agent.2026-01-26.private-key.pem
-native/*.node
-native/target
+crates/*/target
+target/
+Cargo.lock
