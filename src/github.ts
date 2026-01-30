@@ -40,7 +40,7 @@ export class GitHubPRClient {
     return listFiles;
   }
 
-  public async getFileContent(
+  public async getFileTextContent(
     { filename }: FileType,
     refType: "head" | "base",
   ) {
