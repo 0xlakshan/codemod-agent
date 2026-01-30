@@ -222,6 +222,29 @@ pub async fn generate_diff(
     .map_err(|e| Error::from_reason(format!("Task failed: {}", e)))?
 }
 
+#[napi(object)]
+pub struct DiffResult {
+    pub diff: String,
+    pub has_changes: bool,
+}
+
+#[napi]
+pub fn compute_diff(original: String, modified: String) -> DiffResult {
+    let config = DiffConfig::default();
+    let path = Path::new("file.ts");
+    let result = generate_unified_diff(path, &original, &modified, &config);
+
+    // Print diff to terminal
+    if original != modified {
+        println!("\n{}", result.diff_text);
+    }
+
+    DiffResult {
+        has_changes: original != modified,
+        diff: result.diff_text,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
