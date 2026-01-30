@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "pnpm build:native && tsc",
-    "build:native": "napi build --platform --release --manifest-path crates/diff/Cargo.toml",
-    "build:native:debug": "napi build --platform --manifest-path crates/diff/Cargo.toml",
+    "build:native": "napi build --platform --release --manifest-path crates/diff/Cargo.toml && napi build --platform --release --manifest-path crates/codemod-processor/Cargo.toml",
+    "build:native:debug": "napi build --platform --manifest-path crates/diff/Cargo.toml && napi build --platform --manifest-path crates/codemod-processor/Cargo.toml",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "test": "vitest",
@@ -14,7 +14,8 @@
   },
   "napi": {
     "binaryName": "codemod-agent-native",
-    "targets": []
+    "targets": [],
+    "triples": {}
   },
   "keywords": [
     "codemod",
