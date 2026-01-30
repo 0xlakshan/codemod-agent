@@ -66,23 +66,37 @@ async function run(): Promise<void> {
           "head",
         );
 
-        console.log(`processing: ${file.filename} -->\n`, fileTextContent);
+        app.octokit.log.info(`🟢 Processing: ${file.filename} \n`);
 
         try {
           const codemodCommand = "@nodejs/chalk-to-util-styletext";
-          const modifiedContent = await applyCodemod(
+          const updatedContent = await applyCodemod(
             fileTextContent,
             codemodCommand,
           );
-          console.log(file.filename, modifiedContent.diff.hasChanges);
 
-          console.log(
-            `💚 Codemod applied to ${file.filename}`,
-            modifiedContent.diff.hasChanges,
-          );
-          console.log("\n\n\n\n");
+          if (updatedContent.diff.hasChanges) {
+            await githubContext.createCommitWithChanges(
+              file,
+              updatedContent.after,
+            );
+            app.octokit.log.info(`💚 Codemod applied to ${file.filename}`);
+          }
+
+          app.octokit.log.info("\n\n\n\n");
         } catch (error) {
-          console.error(`Failed to apply codemod to ${file.filename}:`, error);
+          if (error instanceof Error && "response" in error) {
+            const apiError = error as any;
+            console.error(
+              `Failed to apply codemod to ${file.filename}:`,
+              apiError.response?.data?.errors || apiError.message,
+            );
+          } else {
+            console.error(
+              `Failed to apply codemod to ${file.filename}:`,
+              error,
+            );
+          }
         }
       }
     });

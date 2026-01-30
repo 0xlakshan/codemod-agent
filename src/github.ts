@@ -84,4 +84,29 @@ export class GitHubPRClient {
 
     return changedFiles;
   }
+
+  public async createCommitWithChanges(file: FileType, newFileContent: string) {
+    const base64Content = Buffer.from(newFileContent, "utf-8").toString(
+      "base64",
+    );
+
+    const result = await this.octokit.rest.repos.createOrUpdateFileContents({
+      owner: this.payload.repository.owner.login,
+      repo: this.payload.repository.name,
+      path: file.filename,
+      message: `💚 Codemod applied to ${file.filename}`,
+      content: base64Content,
+      sha: file.sha || undefined,
+      branch: this.payload.pull_request.head.ref,
+    });
+
+    await this.octokit.rest.issues.createComment({
+      owner: this.payload.repository.owner.login,
+      repo: this.payload.repository.name,
+      issue_number: this.payload.pull_request.number,
+      body: `💚 Codemod applied to \`${file.filename}\``,
+    });
+
+    return result;
+  }
 }
