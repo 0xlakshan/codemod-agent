@@ -15,6 +15,7 @@ const { computeDiff } = require(diffPath);
 export function applyCodemod(
   fileContent: string,
   codemodCommand: string,
+  timeoutMs: number = 30000,
 ): Promise<{
   before: string;
   after: string;
@@ -25,6 +26,15 @@ export function applyCodemod(
     const tempDir = `.temp-${id}`;
     const tempFile = `${tempDir}/temp.ts`;
 
+    let timeoutId: NodeJS.Timeout;
+    let child: ReturnType<typeof spawn>;
+    let settled = false;
+
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      rmSync(tempDir, { recursive: true, force: true });
+    };
+
     try {
       mkdirSync(tempDir, { recursive: true });
       writeFileSync(tempFile, fileContent);
@@ -32,7 +42,7 @@ export function applyCodemod(
       return reject(new Error(`Failed to create temp files ${error}`));
     }
 
-    const child = spawn(
+    child = spawn(
       "npx",
       [
         "codemod@latest",
@@ -47,27 +57,31 @@ export function applyCodemod(
       },
     );
 
+    timeoutId = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      child.kill("SIGTERM");
+      cleanup();
+      reject(new Error(`Codemod timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
     let stdout = "";
     let stderr = "";
 
-    child.stdout.on("data", (data) => {
+    child.stdout?.on("data", (data) => {
       stdout += data.toString();
     });
 
-    child.stderr.on("data", (data) => {
+    child.stderr?.on("data", (data) => {
       stderr += data.toString();
     });
 
-    child.on("close", (code) => {
+    child.on("close", () => {
+      if (settled) return;
+      settled = true;
       try {
         const result = readFileSync(tempFile, "utf8");
-        rmSync(tempDir, { recursive: true, force: true });
-
-        if (result === fileContent) {
-          return reject(
-            new Error(`Codemod failed (exit ${code}) ${stderr || stdout}`),
-          );
-        }
+        cleanup();
 
         const diffResult = computeDiff(fileContent, result);
 
@@ -77,13 +91,15 @@ export function applyCodemod(
           diff: diffResult,
         });
       } catch (error) {
-        rmSync(tempDir, { recursive: true, force: true });
+        cleanup();
         reject(new Error(`Failed to read result ${error}`));
       }
     });
 
     child.on("error", (error) => {
-      rmSync(tempDir, { recursive: true, force: true });
+      if (settled) return;
+      settled = true;
+      cleanup();
       reject(new Error(`Failed to spawn codemod ${error}`));
     });
   });

@@ -11,6 +11,7 @@ import SmeeClient from "smee-client";
 import { createNodeMiddleware, EmitterWebhookEvent } from "@octokit/webhooks";
 
 import { GitHubPRClient } from "./github.js";
+import { applyCodemod } from "./applyCodemod.js";
 
 dotenv.config();
 
@@ -60,10 +61,28 @@ async function run(): Promise<void> {
       const changedFiles = await githubContext.getChangedFiles();
 
       for (const file of changedFiles) {
-        if (file.status === "added") {
-          // apply codemod
-        } else {
-          // apply codemod
+        const fileTextContent = await githubContext.getFileTextContent(
+          file,
+          "head",
+        );
+
+        console.log(`processing: ${file.filename} -->\n`, fileTextContent);
+
+        try {
+          const codemodCommand = "@nodejs/chalk-to-util-styletext";
+          const modifiedContent = await applyCodemod(
+            fileTextContent,
+            codemodCommand,
+          );
+          console.log(file.filename, modifiedContent.diff.hasChanges);
+
+          console.log(
+            `💚 Codemod applied to ${file.filename}`,
+            modifiedContent.diff.hasChanges,
+          );
+          console.log("\n\n\n\n");
+        } catch (error) {
+          console.error(`Failed to apply codemod to ${file.filename}:`, error);
         }
       }
     });
