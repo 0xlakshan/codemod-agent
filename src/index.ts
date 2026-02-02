@@ -9,7 +9,6 @@ import type { Octokit } from "octokit";
 import { App } from "octokit";
 import SmeeClient from "smee-client";
 import { createNodeMiddleware, EmitterWebhookEvent } from "@octokit/webhooks";
-
 import { GitHubPRClient } from "./github.js";
 import { applyCodemod } from "./applyCodemod.js";
 
@@ -21,8 +20,11 @@ expressApp.use(cors());
 
 // Types
 export type AppOctokit = Octokit;
+
 export type PullRequestOpenedPayload =
   EmitterWebhookEvent<"pull_request.opened">["payload"];
+
+export type CommentPayload = EmitterWebhookEvent<"issue_comment">["payload"];
 
 async function run(): Promise<void> {
   const appId = process.env.APP_ID;
@@ -54,52 +56,75 @@ async function run(): Promise<void> {
       console.log(name, id, payload.sender?.login, " event received");
     });
 
-    app.webhooks.on("pull_request.opened", async ({ octokit, payload }) => {
-      console.log(`pull request - #${payload.pull_request.number}`);
+    app.webhooks.on(
+      "issue_comment",
+      async ({ octokit, payload: commentPayload }) => {
+        if (!commentPayload.issue.pull_request) {
+          return;
+        }
 
-      const githubContext = new GitHubPRClient(octokit, payload);
-      const changedFiles = await githubContext.getChangedFiles();
+        if (!commentPayload.comment.body) {
+          return;
+        }
 
-      for (const file of changedFiles) {
-        const fileTextContent = await githubContext.getFileTextContent(
-          file,
-          "head",
+        const commentBody = commentPayload.comment.body.split(" ");
+
+        if (commentBody.length !== 2 || commentBody[0] !== "/codemod") {
+          return;
+        }
+
+        const codemodCommand = commentBody[1];
+        const githubContext = await GitHubPRClient.create(
+          octokit,
+          commentPayload,
         );
+        const changedFiles = await githubContext.getChangedFiles();
 
-        app.octokit.log.info(`🟢 Processing: ${file.filename} \n`);
-
-        try {
-          const codemodCommand = "@nodejs/chalk-to-util-styletext";
-          const updatedContent = await applyCodemod(
-            fileTextContent,
-            codemodCommand,
+        for (const file of changedFiles) {
+          const fileTextContent = await githubContext.getFileTextContent(
+            file,
+            "head",
           );
 
-          if (updatedContent.diff.hasChanges) {
-            await githubContext.createCommitWithChanges(
-              file,
-              updatedContent.after,
-            );
-            app.octokit.log.info(`💚 Codemod applied to ${file.filename}`);
-          }
+          app.octokit.log.info(`🟢 Processing: ${file.filename} \n`);
 
-          app.octokit.log.info("\n\n\n\n");
-        } catch (error) {
-          if (error instanceof Error && "response" in error) {
-            const apiError = error as any;
-            console.error(
-              `Failed to apply codemod to ${file.filename}:`,
-              apiError.response?.data?.errors || apiError.message,
+          try {
+            const updatedContent = await applyCodemod(
+              fileTextContent,
+              codemodCommand,
             );
-          } else {
-            console.error(
-              `Failed to apply codemod to ${file.filename}:`,
-              error,
-            );
+
+            if (updatedContent.diff.hasChanges) {
+              await githubContext.createCommitWithChanges(
+                file,
+                updatedContent.after,
+              );
+              app.octokit.log.info(`💚 Codemod applied to ${file.filename}`);
+            }
+
+            app.octokit.log.info("\n\n\n\n");
+          } catch (error) {
+            if (error instanceof Error && "response" in error) {
+              const apiError = error as any;
+              console.error(
+                `Failed to apply codemod to ${file.filename}:`,
+                apiError.response?.data?.errors || apiError.message,
+              );
+            } else {
+              console.error(
+                `Failed to apply codemod to ${file.filename}:`,
+                error,
+              );
+            }
           }
         }
-      }
-    });
+      },
+    );
+
+    // TODO: On PR Opened event
+    // app.webhooks.on("pull_request.opened", async ({ octokit, payload }) => {
+    //   console.log(`pull request - #${payload.pull_request.number}`);
+    // });
 
     app.webhooks.onError((error) => {
       throw new Error(`web hook error: ${error.event}`);

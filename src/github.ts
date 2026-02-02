@@ -1,4 +1,4 @@
-import type { AppOctokit, PullRequestOpenedPayload } from "./index";
+import type { AppOctokit, CommentPayload } from "./index.js";
 
 type FileType = {
   sha: string | null;
@@ -23,21 +23,47 @@ type FileType = {
 
 export class GitHubPRClient {
   private readonly octokit: AppOctokit;
-  private readonly payload: PullRequestOpenedPayload;
+  private readonly owner: string;
+  private readonly repository: string;
+  private readonly pullRequestNumber: number;
+  private pullRequest?: Awaited<
+    ReturnType<AppOctokit["rest"]["pulls"]["get"]>
+  >["data"];
 
-  constructor(octokit: AppOctokit, payload: PullRequestOpenedPayload) {
+  constructor(octokit: AppOctokit, commentPayload: CommentPayload) {
     this.octokit = octokit;
-    this.payload = payload;
+    this.owner = commentPayload.repository.owner.login;
+    this.repository = commentPayload.repository.name;
+    this.pullRequestNumber = commentPayload.issue.number;
   }
 
-  // add the return type or error
+  static async create(octokit: AppOctokit, commentPayload: CommentPayload) {
+    const client = new GitHubPRClient(octokit, commentPayload);
+    const pullRequestResponse = await octokit.rest.pulls.get({
+      owner: client.owner,
+      repo: client.repository,
+      pull_number: client.pullRequestNumber,
+    });
+    client.pullRequest = pullRequestResponse.data;
+    return client;
+  }
+
+  // Add the return type or error
   private async listFiles() {
     const listFiles = await this.octokit.rest.pulls.listFiles({
-      owner: this.payload.repository.owner.login,
-      repo: this.payload.repository.name,
-      pull_number: this.payload.pull_request.number,
+      owner: this.owner,
+      repo: this.repository,
+      pull_number: this.pullRequestNumber,
     });
     return listFiles;
+  }
+
+  get head() {
+    return this.pullRequest!.head;
+  }
+
+  get base() {
+    return this.pullRequest!.base;
   }
 
   public async getFileTextContent(
@@ -45,13 +71,10 @@ export class GitHubPRClient {
     refType: "head" | "base",
   ) {
     const fileContent = await this.octokit.rest.repos.getContent({
-      owner: this.payload.repository.owner.login,
-      repo: this.payload.repository.name,
+      owner: this.owner,
+      repo: this.repository,
       path: filename,
-      ref:
-        refType === "head"
-          ? this.payload.pull_request.head.sha
-          : this.payload.pull_request.base.sha,
+      ref: refType === "head" ? this.head.sha : this.base.sha,
       mediaType: { format: "diff" },
     });
 
@@ -91,19 +114,19 @@ export class GitHubPRClient {
     );
 
     const result = await this.octokit.rest.repos.createOrUpdateFileContents({
-      owner: this.payload.repository.owner.login,
-      repo: this.payload.repository.name,
+      owner: this.owner,
+      repo: this.repository,
       path: file.filename,
       message: `💚 Codemod applied to ${file.filename}`,
       content: base64Content,
       sha: file.sha || undefined,
-      branch: this.payload.pull_request.head.ref,
+      branch: this.head.ref,
     });
 
     await this.octokit.rest.issues.createComment({
-      owner: this.payload.repository.owner.login,
-      repo: this.payload.repository.name,
-      issue_number: this.payload.pull_request.number,
+      owner: this.owner,
+      repo: this.repository,
+      issue_number: this.pullRequestNumber,
       body: `💚 Codemod applied to \`${file.filename}\``,
     });
 
