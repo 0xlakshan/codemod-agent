@@ -118,6 +118,8 @@ async function run(): Promise<void> {
             }
           }
         }
+
+        await githubContext.summeryComment(changedFiles);
       },
     );
 

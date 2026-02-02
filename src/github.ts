@@ -117,19 +117,23 @@ export class GitHubPRClient {
       owner: this.owner,
       repo: this.repository,
       path: file.filename,
-      message: `💚 Codemod applied to ${file.filename}`,
+      message: `💚 Add Codemod to ${file.filename}`,
       content: base64Content,
       sha: file.sha || undefined,
       branch: this.head.ref,
     });
 
+    return result;
+  }
+
+  public async summeryComment(fileList: FileType[]) {
+    // TODO: if no files been changed let the user know
+    // If only one file been changed change the setence accordingly
     await this.octokit.rest.issues.createComment({
       owner: this.owner,
       repo: this.repository,
       issue_number: this.pullRequestNumber,
-      body: `💚 Codemod applied to \`${file.filename}\``,
+      body: `💚 Codemods have been applied to the following files \n${fileList.map((file) => `- ${file.filename}`).join('\n')}`,
     });
-
-    return result;
   }
 }
