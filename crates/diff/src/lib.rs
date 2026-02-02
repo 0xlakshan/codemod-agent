@@ -354,4 +354,74 @@ mod tests {
 
         assert!(result.diff_text.contains("(diff truncated)"));
     }
+
+    #[test]
+    fn test_generate_unified_diff_empty_original() {
+        let original = "";
+        let modified = "line1\nline2\n";
+        let path = PathBuf::from("test.txt");
+        let config = DiffConfig {
+            color: false,
+            ..Default::default()
+        };
+
+        let result = generate_unified_diff(&path, original, modified, &config);
+
+        assert_eq!(result.additions, 2);
+        assert_eq!(result.deletions, 0);
+    }
+
+    #[test]
+    fn test_generate_unified_diff_empty_modified() {
+        let original = "line1\nline2\n";
+        let modified = "";
+        let path = PathBuf::from("test.txt");
+        let config = DiffConfig {
+            color: false,
+            ..Default::default()
+        };
+
+        let result = generate_unified_diff(&path, original, modified, &config);
+
+        assert_eq!(result.additions, 0);
+        assert_eq!(result.deletions, 2);
+    }
+
+    #[test]
+    fn test_generate_unified_diff_both_empty() {
+        let original = "";
+        let modified = "";
+        let path = PathBuf::from("test.txt");
+        let config = DiffConfig {
+            color: false,
+            ..Default::default()
+        };
+
+        let result = generate_unified_diff(&path, original, modified, &config);
+
+        assert_eq!(result.additions, 0);
+        assert_eq!(result.deletions, 0);
+    }
+
+    #[test]
+    fn test_compute_diff_with_changes() {
+        let original = "line1\nline2\n".to_string();
+        let modified = "line1\nmodified\n".to_string();
+
+        let result = compute_diff(original, modified);
+
+        assert!(result.has_changes);
+        assert!(result.diff.contains("-line2"));
+        assert!(result.diff.contains("+modified"));
+    }
+
+    #[test]
+    fn test_compute_diff_no_changes() {
+        let original = "line1\nline2\n".to_string();
+        let modified = "line1\nline2\n".to_string();
+
+        let result = compute_diff(original, modified);
+
+        assert!(!result.has_changes);
+    }
 }
