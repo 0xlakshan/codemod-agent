@@ -26,6 +26,27 @@ export type PullRequestOpenedPayload =
 
 export type CommentPayload = EmitterWebhookEvent<"issue_comment">["payload"];
 
+export type FileType = {
+  sha: string | null;
+  filename: string;
+  status:
+    | "added"
+    | "removed"
+    | "renamed"
+    | "changed"
+    | "modified"
+    | "copied"
+    | "unchanged";
+  additions: number;
+  deletions: number;
+  changes: number;
+  blob_url: string;
+  raw_url: string;
+  contents_url: string;
+  patch?: string | undefined;
+  previous_filename?: string | undefined;
+};
+
 async function run(): Promise<void> {
   const appId = process.env.APP_ID;
   const privateKeyPath = process.env.PRIVATE_KEY_PATH;
@@ -80,6 +101,8 @@ async function run(): Promise<void> {
         );
         const changedFiles = await githubContext.getChangedFiles();
 
+        let codemodAppliedFiles: FileType[] = [];
+
         for (const file of changedFiles) {
           const fileTextContent = await githubContext.getFileTextContent(
             file,
@@ -99,6 +122,7 @@ async function run(): Promise<void> {
                 file,
                 updatedContent.after,
               );
+              codemodAppliedFiles.push(file);
               app.octokit.log.info(`💚 Codemod applied to ${file.filename}`);
             }
 
@@ -119,7 +143,7 @@ async function run(): Promise<void> {
           }
         }
 
-        await githubContext.summeryComment(changedFiles);
+        await githubContext.summeryComment(codemodAppliedFiles);
       },
     );
 

@@ -1,25 +1,25 @@
-import type { AppOctokit, CommentPayload } from "./index.js";
+import type { AppOctokit, CommentPayload, FileType } from "./index.js";
 
-type FileType = {
-  sha: string | null;
-  filename: string;
-  status:
-    | "added"
-    | "removed"
-    | "renamed"
-    | "changed"
-    | "modified"
-    | "copied"
-    | "unchanged";
-  additions: number;
-  deletions: number;
-  changes: number;
-  blob_url: string;
-  raw_url: string;
-  contents_url: string;
-  patch?: string | undefined;
-  previous_filename?: string | undefined;
-};
+// export type FileType = {
+//   sha: string | null;
+//   filename: string;
+//   status:
+//     | "added"
+//     | "removed"
+//     | "renamed"
+//     | "changed"
+//     | "modified"
+//     | "copied"
+//     | "unchanged";
+//   additions: number;
+//   deletions: number;
+//   changes: number;
+//   blob_url: string;
+//   raw_url: string;
+//   contents_url: string;
+//   patch?: string | undefined;
+//   previous_filename?: string | undefined;
+// };
 
 export class GitHubPRClient {
   private readonly octokit: AppOctokit;
@@ -129,11 +129,22 @@ export class GitHubPRClient {
   public async summeryComment(fileList: FileType[]) {
     // TODO: if no files been changed let the user know
     // If only one file been changed change the setence accordingly
+
+    if (fileList.length === 0) {
+      await this.octokit.rest.issues.createComment({
+        owner: this.owner,
+        repo: this.repository,
+        issue_number: this.pullRequestNumber,
+        body: `💚 No matching files found - nothing to update.`,
+      });
+      return;
+    }
+
     await this.octokit.rest.issues.createComment({
       owner: this.owner,
       repo: this.repository,
       issue_number: this.pullRequestNumber,
-      body: `💚 Codemods have been applied to the following files \n${fileList.map((file) => `- ${file.filename}`).join('\n')}`,
+      body: `💚 Codemods have been applied to the following files \n${fileList.map((file) => `- ${file.filename}`).join("\n")}`,
     });
   }
 }
