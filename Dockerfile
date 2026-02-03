@@ -30,6 +30,13 @@ FROM node:22-slim
 
 WORKDIR /app
 
+# Install OpenSSL 3 and CA certificates (required by codemod CLI)
+RUN apt-get update && apt-get install -y \
+    openssl \
+    libssl3 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN npm install -g pnpm@10.14.0
 
 COPY package.json pnpm-lock.yaml ./
