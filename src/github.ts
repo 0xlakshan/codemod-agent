@@ -1,25 +1,4 @@
-import type { AppOctokit, CommentPayload, FileType } from "./index.js";
-
-// export type FileType = {
-//   sha: string | null;
-//   filename: string;
-//   status:
-//     | "added"
-//     | "removed"
-//     | "renamed"
-//     | "changed"
-//     | "modified"
-//     | "copied"
-//     | "unchanged";
-//   additions: number;
-//   deletions: number;
-//   changes: number;
-//   blob_url: string;
-//   raw_url: string;
-//   contents_url: string;
-//   patch?: string | undefined;
-//   previous_filename?: string | undefined;
-// };
+import type { AppOctokit, CommentPayload, FileType } from "./types.js";
 
 export class GitHubPRClient {
   private readonly octokit: AppOctokit;
