@@ -8,3 +8,4 @@ codemod-agent.2026-01-26.private-key.pem
 crates/*/target
 target/
 Cargo.lock
+/keys

@@ -1,0 +1,14 @@
+services:
+  codemod-agent:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - APP_ID=${APP_ID}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - PRIVATE_KEY_PATH=/app/keys/private-key.pem
+    volumes:
+      - ./keys:/app/keys:ro
+    restart: unless-stopped

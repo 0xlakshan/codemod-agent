@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.node
+target/
+.env
+*.pem
+.temp-*
+.vscode/
+.idea/
+.kiro/
+.DS_Store
+*.log
+npm-debug.log*
+coverage/
