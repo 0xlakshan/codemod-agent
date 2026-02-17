@@ -29,3 +29,55 @@ Example:
 
 - Registry: <https://app.codemod.com/registry>
 - Publish your own: <https://codemod.mintlify.app/publishing>
+
+### Self Hosting Guide
+
+Run your own instance of Codemod Agent:
+
+1. **Fork and clone the repository**
+
+   ```bash
+   git clone https://github.com/<your-username>/codemod-agent.git
+   cd codemod-agent
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   pnpm install
+   ```
+
+3. **Create a GitHub App**
+   - Go to GitHub Settings → Developer settings → GitHub Apps → New GitHub App
+   - Set Webhook URL (use [smee.io](https://smee.io) for local development)
+   - Required permissions:
+     - Repository permissions: Contents (Read & Write), Pull requests (Read & Write), Issues (Read & Write)
+   - Subscribe to events: Issue comment, Pull request
+   - Generate and download a private key
+
+4. **Configure environment variables**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env`:
+
+   ```
+   APP_ID="<your-github-app-id>"
+   WEBHOOK_SECRET="<your-webhook-secret>"
+   PRIVATE_KEY_PATH="<path-to-private-key.pem>"
+   PORT="3000"
+   NODE_ENV="development"
+   ```
+
+5. **Build and run**
+
+   ```bash
+   pnpm build
+   node dist/index.js
+   ```
+
+6. **Install the app on your repositories**
+   - Go to your GitHub App settings
+   - Install the app on repositories where you want to use it
